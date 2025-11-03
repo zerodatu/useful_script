@@ -116,13 +116,13 @@ find "$root" -type d -print0 | while IFS= read -r -d '' dir; do
             img="${imgs[$idx]}"
             printf -v tmp "%s/%05d.jpg" "$tmpdir" "$idx"
             if $have_magick; then
-              if ! magick "$img" -background white -alpha remove -alpha off "$tmp"; then
+              if ! magick -limit memory 256MiB -limit map 512MiB "$img" -background white -alpha remove -alpha off "$tmp"; then
                 flatten_failed=true
                 err_msg="failed to flatten $img"
                 break
               fi
             else
-              if ! convert "$img" -background white -alpha remove -alpha off "$tmp"; then
+              if ! convert -limit memory 256MiB -limit map 512MiB "$img" -background white -alpha remove -alpha off "$tmp"; then
                 flatten_failed=true
                 err_msg="failed to flatten $img"
                 break
