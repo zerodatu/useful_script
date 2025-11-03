@@ -12,24 +12,30 @@ fi
 deleted=0
 skipped=0
 
+declare -A pdf_map=()
+
 while IFS= read -r -d '' pdf; do
-  pdf_name=$(basename "$pdf")
+  pdf_dir=$(dirname -- "$pdf")
+  pdf_name=$(basename -- "$pdf")
   base="${pdf_name%.[Pp][Dd][Ff]}"
-  dir_candidate="$target_abs/$base"
+  key="${pdf_dir}"$'\t'"${base,,}"
+  pdf_map["$key"]=1
+done < <(find "$target_abs" -maxdepth 1 -type f -iname '*.pdf' -print0)
 
-  if [[ -d "$dir_candidate" ]]; then
-    if [[ "$dir_candidate" == "$target_abs" ]]; then
-      echo "warn: ルートと同名のためスキップ: $dir_candidate" >&2
-      ((skipped++))
-      continue
-    fi
+while IFS= read -r -d '' dir_path; do
+  dir="${dir_path%/}"
+  parent=$(dirname -- "$dir")
+  base=$(basename -- "$dir")
+  key="${parent}"$'\t'"${base,,}"
 
-    rm -rf -- "$dir_candidate"
-    echo "removed: $dir_candidate"
+  if [[ -n "${pdf_map[$key]:-}" ]]; then
+    rm -rf -- "$dir"
+    echo "removed: $dir"
     ((deleted++))
   else
+    echo "skip: no matching pdf -> $dir" >&2
     ((skipped++))
   fi
-done < <(find "$target_abs" -maxdepth 1 -type f -iname '*.pdf' -print0)
+done < <(find "$target_abs" -maxdepth 1 -mindepth 1 -type d -print0)
 
 echo "done: deleted=$deleted skipped=$skipped"
