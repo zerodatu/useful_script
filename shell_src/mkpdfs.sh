@@ -84,13 +84,13 @@ find "$root" -type d -print0 | while IFS= read -r -d '' dir; do
   err_msg=""
 
   if $have_img2pdf; then
-    if output=$(img2pdf --auto-orient --output "$outfile" "${imgs[@]}" 2>&1); then
+    if output=$(img2pdf --rotation ifvalid --output "$outfile" "${imgs[@]}" 2>&1); then
       pdf_done=true
     else
       err_msg="$output"
       if [[ "$err_msg" == *"Invalid rotation"* ]]; then
-        echo "warn: img2pdf auto-orient failed (Invalid rotation). retrying without auto-orient: $outfile" >&2
-        if output=$(img2pdf --output "$outfile" "${imgs[@]}" 2>&1); then
+        echo "warn: img2pdf rotation auto failed (Invalid rotation). retrying with --rotation none: $outfile" >&2
+        if output=$(img2pdf --rotation none --output "$outfile" "${imgs[@]}" 2>&1); then
           pdf_done=true
         else
           err_msg="$output"
