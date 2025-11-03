@@ -96,6 +96,44 @@ find "$root" -type d -print0 | while IFS= read -r -d '' dir; do
           err_msg="$output"
         fi
       fi
+
+      if ! $pdf_done && [[ "$err_msg" == *"alpha"* ]]; then
+        if $have_magick || $have_convert; then
+          echo "warn: flattening images to remove alpha channel before pdf: $outfile" >&2
+          tmpdir=$(mktemp -d)
+          tmp_imgs=()
+          flatten_failed=false
+          for idx in "${!imgs[@]}"; do
+            img="${imgs[$idx]}"
+            printf -v tmp "%s/%05d.jpg" "$tmpdir" "$idx"
+            if $have_magick; then
+              if ! magick "$img" -background white -alpha remove -alpha off "$tmp"; then
+                flatten_failed=true
+                err_msg="failed to flatten $img"
+                break
+              fi
+            else
+              if ! convert "$img" -background white -alpha remove -alpha off "$tmp"; then
+                flatten_failed=true
+                err_msg="failed to flatten $img"
+                break
+              fi
+            fi
+            tmp_imgs+=("$tmp")
+          done
+
+          if ! $flatten_failed; then
+            if output=$(img2pdf --rotation none --output "$outfile" "${tmp_imgs[@]}" 2>&1); then
+              pdf_done=true
+              err_msg=""
+            else
+              err_msg="$output"
+            fi
+          fi
+
+          rm -rf "$tmpdir"
+        fi
+      fi
     fi
   fi
 
