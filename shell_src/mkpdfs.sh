@@ -40,6 +40,11 @@ out_root="${2:-}"
 
 img_regex='.*\.\(jpg\|jpeg\|png\|gif\|bmp\|tif\|tiff\|webp\|heic\)$'
 
+if ! root_abs=$(cd "$root" 2>/dev/null && pwd -P); then
+  echo "ERROR: ルートディレクトリにアクセスできないよ: $root" >&2
+  exit 1
+fi
+
 have_img2pdf=false
 have_magick=false
 have_convert=false
@@ -64,7 +69,11 @@ find "$root" -type d -print0 | while IFS= read -r -d '' dir; do
     mkdir -p "$out_root"
     outfile="$out_root/${rel//\//_}.pdf"
   else
-    outfile="$dir/$(basename "$dir").pdf"
+    base="$(basename "$dir")"
+    if [[ "$base" == "." || "$base" == "/" || -z "$base" ]]; then
+      base="$(basename "$root_abs")"
+    fi
+    outfile="$dir/$base.pdf"
   fi
 
   if [[ -f "$outfile" ]]; then
