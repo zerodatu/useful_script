@@ -80,12 +80,39 @@ find "$root" -type d -print0 | while IFS= read -r -d '' dir; do
     fi
   fi
 
+  pdf_done=false
+  err_msg=""
+
   if $have_img2pdf; then
-    img2pdf --auto-orient --output "$outfile" "${imgs[@]}"
-  elif $have_magick; then
-    magick "${imgs[@]}" "$outfile"
-  else
-    convert "${imgs[@]}" "$outfile"
+    if output=$(img2pdf --auto-orient --output "$outfile" "${imgs[@]}" 2>&1); then
+      pdf_done=true
+    else
+      err_msg="$output"
+      if [[ "$err_msg" == *"Invalid rotation"* ]]; then
+        echo "warn: img2pdf auto-orient failed (Invalid rotation). retrying without auto-orient: $outfile" >&2
+        if output=$(img2pdf --output "$outfile" "${imgs[@]}" 2>&1); then
+          pdf_done=true
+        else
+          err_msg="$output"
+        fi
+      fi
+    fi
+  fi
+
+  if ! $pdf_done; then
+    if $have_magick; then
+      [[ -n "$err_msg" ]] && echo "$err_msg" >&2
+      magick "${imgs[@]}" "$outfile"
+      pdf_done=true
+    elif $have_convert; then
+      [[ -n "$err_msg" ]] && echo "$err_msg" >&2
+      convert "${imgs[@]}" "$outfile"
+      pdf_done=true
+    else
+      [[ -n "$err_msg" ]] && echo "$err_msg" >&2
+      echo "ERROR: PDF生成に失敗したよ: $outfile" >&2
+      exit 1
+    fi
   fi
 
   echo "made: $outfile"
