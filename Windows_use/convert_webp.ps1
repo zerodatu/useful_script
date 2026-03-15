@@ -2,7 +2,7 @@ $QUALITY_JPG = 80
 $PNG_MODE = "lossless"
 $QUALITY_PNG = 90
 
-$cwebp = "C:\webp\cwebp.exe"
+$cwebp = "C:\libwebp-1.6.0-windows-x64\bin\cwebp.exe"
 
 if (!(Test-Path $cwebp)) {
     Write-Host "cwebp が見つかりません"
