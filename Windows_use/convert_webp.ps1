@@ -1,3 +1,6 @@
+# & "E:\04.development\useful_script\Windows_use\convert_webp.ps1"
+# 上記のように実行する
+
 $QUALITY_JPG = 80
 $PNG_MODE = "lossless"
 $QUALITY_PNG = 90
